@@ -1,38 +1,22 @@
 package com.umc.study.repository;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import com.umc.study.domain.Book;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Map;
 
-@Repository
-@RequiredArgsConstructor
-public class BookRepository {
+public interface BookRepository extends JpaRepository<Book, Long> {
 
-    private final JdbcTemplate jdbcTemplate;
+    // 최신 등록순 전체 조회. category를 함께 가져와 N+1 쿼리를 방지
+    @EntityGraph(attributePaths = "category")
+    List<Book> findAllByOrderByBookIdDesc();
 
-    // [실습 1] 도서 전체 목록 조회
-    public List<Map<String, Object>> findAll() {
-        String sql = "SELECT * FROM book";
-        return jdbcTemplate.queryForList(sql);
-    }
+    // [선택 미션] 제목 키워드 검색 (LIKE %keyword%)
+    @EntityGraph(attributePaths = "category")
+    List<Book> findByTitleContainingOrderByBookIdDesc(String keyword);
 
-    // [실습 2] 신규 도서 등록 (book_id는 AUTO_INCREMENT라 생략)
-    public void save(Map<String, Object> body) {
-        String sql = "INSERT INTO book (category_id, title, description, is_available) VALUES (?, ?, ?, true)";
-        jdbcTemplate.update(
-                sql,
-                body.get("categoryId"),
-                body.get("title"),
-                body.get("description")
-        );
-    }
-
-    // [미션 1] 특정 카테고리 도서 목록 조회 - 파라미터 바인딩으로 SQL Injection 방지
-    public List<Map<String, Object>> findByCategoryId(Long categoryId) {
-        String sql = "SELECT * FROM book WHERE category_id = ?";
-        return jdbcTemplate.queryForList(sql, categoryId);
-    }
+    // 3주차 미션 API 유지: 특정 카테고리 도서 조회
+    @EntityGraph(attributePaths = "category")
+    List<Book> findAllByCategory_CategoryIdOrderByBookIdDesc(Long categoryId);
 }
